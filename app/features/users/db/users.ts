@@ -1,8 +1,11 @@
 import { db } from "@/drizzle/db";
 import { UserTable } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
+import { revalidateUserCahce } from "./cache";
 
 export async function insertUser(data: typeof UserTable.$inferInsert) {
+  console.log(`📝 Attempting to insert user:`, data);
+
   const [newUser] = await db
     .insert(UserTable)
     .values(data)
@@ -12,7 +15,8 @@ export async function insertUser(data: typeof UserTable.$inferInsert) {
       set: data,
     });
 
-  if (newUser === null) throw new Error("Failed to create new user");
+  if (newUser == null) throw new Error("Failed to create user");
+  revalidateUserCahce(newUser.id);
 
   return newUser;
 }
@@ -27,13 +31,14 @@ export async function updateUser(
     .where(eq(UserTable.clerkUserId, clerkUserId))
     .returning();
 
-  if (updatedUser === null) throw new Error("Failed to update user");
+  if (updatedUser == null) throw new Error("Failed to update user");
+  revalidateUserCahce(updatedUser.id);
 
   return updatedUser;
 }
 
 export async function deleteUser({ clerkUserId }: { clerkUserId: string }) {
-  const deletedUsers = await db
+  const [deletedUser] = await db
     .update(UserTable)
     .set({
       deletedAt: new Date(),
@@ -45,11 +50,8 @@ export async function deleteUser({ clerkUserId }: { clerkUserId: string }) {
     .where(eq(UserTable.clerkUserId, clerkUserId))
     .returning();
 
-  if (!deletedUsers || deletedUsers.length === 0) {
-    throw new Error(
-      `Failed to delete user: No user found with clerkUserId ${clerkUserId}`
-    );
-  }
+  if (deletedUser == null) throw new Error("Failed to delete user");
+  revalidateUserCahce(deletedUser.id);
 
-  return deletedUsers[0];
+  return deletedUser;
 }

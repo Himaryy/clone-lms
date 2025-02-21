@@ -64,6 +64,8 @@ function Navbar() {
 }
 
 async function AdminLink() {
+  // const user = await getCurrentUser({ allData: true });
+  // console.log(user.user?.name);
   const user = await getCurrentUser();
   if (!canAccessAdminPages(user)) return null;
 

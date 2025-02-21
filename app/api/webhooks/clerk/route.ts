@@ -47,9 +47,8 @@ export async function POST(req: Request) {
         (email) => email.id === event.data.primary_email_address_id
       )?.email_address;
       const name = `${event.data.first_name} ${event.data.last_name}`.trim();
-
-      if (email == null) return new Response("No Email", { status: 400 });
-      if (name === "") return new Response("No Name", { status: 400 });
+      if (email == null) return new Response("No email", { status: 400 });
+      if (name === "") return new Response("No name", { status: 400 });
 
       if (event.type === "user.created") {
         const user = await insertUser({
@@ -75,7 +74,7 @@ export async function POST(req: Request) {
       break;
     }
     case "user.deleted": {
-      if (event.data.id !== null) {
+      if (event.data.id != null) {
         await deleteUser({ clerkUserId: event.data.id });
       }
       break;
