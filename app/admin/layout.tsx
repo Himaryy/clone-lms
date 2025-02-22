@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
-import { canAccessAdminPages } from "@/permissions/general";
-import { getCurrentUser } from "@/services/clerk";
+// import { canAccessAdminPages } from "@/permissions/general";
+// import { getCurrentUser } from "@/services/clerk";
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { ReactNode } from "react";
@@ -26,7 +26,7 @@ function Navbar() {
           </Link>
           <Badge>Admin</Badge>
         </div>
-        <AdminLink />
+        {/* <AdminLink /> */}
 
         <Link
           className="hover:bg-accent/10 flex items-center px-2"
@@ -63,14 +63,14 @@ function Navbar() {
   );
 }
 
-async function AdminLink() {
-  const user = await getCurrentUser();
-  // console.log(user.user?.name);
-  if (!canAccessAdminPages(user)) return null;
+// async function AdminLink() {
+//   const user = await getCurrentUser();
+//   // console.log(user.user?.name);
+//   if (!canAccessAdminPages(user)) return null;
 
-  return (
-    <Link className="hover:bg-accent/10 flex items-center px-2" href="/admin">
-      Admin
-    </Link>
-  );
-}
+//   return (
+//     <Link className="hover:bg-accent/10 flex items-center px-2" href="/admin">
+//       Admin
+//     </Link>
+//   );
+// }
