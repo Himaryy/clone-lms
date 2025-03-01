@@ -18,21 +18,39 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { CreateCourse } from "../actions/courses";
 import { actionToast } from "@/lib/utils";
+import { updateCourse } from "../db/courses";
+import { useTransition } from "react";
 
-export function CourseForm() {
+export function CourseForm({
+  course,
+}: {
+  course?: {
+    id: string;
+    name: string;
+    description: string;
+  };
+}) {
   const form = useForm<z.infer<typeof courseSchema>>({
     resolver: zodResolver(courseSchema),
-    defaultValues: {
+    defaultValues: course ?? {
       name: "",
       description: "",
     },
   });
 
-  async function onSubmit(values: z.infer<typeof courseSchema>) {
-    const data = await CreateCourse(values);
+  const [isLoading, startTransition] = useTransition();
 
-    actionToast({
-      actionData: data, // ✅ Now `data` contains the actual object { error, message }
+  async function onSubmit(values: z.infer<typeof courseSchema>) {
+    startTransition(async () => {
+      try {
+        const data = course
+          ? await updateCourse(course.id, values)
+          : await CreateCourse(values);
+
+        actionToast({ actionData: data });
+      } catch (error) {
+        console.error("Error Updating course: ", error);
+      }
     });
   }
 
@@ -79,8 +97,8 @@ export function CourseForm() {
         />
 
         <div className="self-end">
-          <Button disabled={form.formState.isSubmitting} type="submit">
-            Save
+          <Button disabled={isLoading} type="submit">
+            {isLoading ? "Saving" : "Save"}
           </Button>
         </div>
       </form>
