@@ -3,6 +3,8 @@ import { getCourseIdTag } from "@/app/features/courses/db/cache/courses";
 import { SectionFormDialog } from "@/app/features/courseSection/components/SectionFormDialog";
 import { SortableSectionList } from "@/app/features/courseSection/components/SortableSectionList";
 import { getCourseSectionCourseTag } from "@/app/features/courseSection/db/cache";
+import { LessonFormDialog } from "@/app/features/lesson/components/LessonFormDialog";
+import { SortableLessonList } from "@/app/features/lesson/components/SortableLessonList";
 import { getLessonCourseTag } from "@/app/features/lesson/db/cache/lesson";
 import PageHeader from "@/components/PageHeader";
 import { AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -11,8 +13,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { db } from "@/drizzle/db";
 import { CourseSectionTable, CourseTable, LessonTable } from "@/drizzle/schema";
+import { cn } from "@/lib/utils";
 import { asc, eq } from "drizzle-orm";
-import { PlusIcon } from "lucide-react";
+import { EyeClosed, PlusIcon } from "lucide-react";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 import { notFound } from "next/navigation";
 
@@ -35,7 +38,7 @@ export default async function EditCoursePage({
           <TabsTrigger value="details">Details</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="lessons">
+        <TabsContent value="lessons" className="flex flex-col gap-2 ">
           <Card>
             <CardHeader className="flex items-center flex-row justify-between">
               <CardTitle>Sections</CardTitle>
@@ -54,6 +57,38 @@ export default async function EditCoursePage({
               />
             </CardContent>
           </Card>
+
+          <hr className="my-2" />
+          {course.courseSections.map((section) => (
+            <Card key={section.id}>
+              <CardHeader className="flex items-center flex-row justify-between gap-4">
+                <CardTitle
+                  className={cn(
+                    "flex items-center gap-2",
+                    section.status === "private" && "text-muted-foreground"
+                  )}
+                >
+                  {section.status === "private" && <EyeClosed />} {section.name}
+                </CardTitle>
+                <LessonFormDialog
+                  defaultSectionId={section.id}
+                  section={course.courseSections}
+                >
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline">
+                      <PlusIcon /> New Lesson
+                    </Button>
+                  </AlertDialogTrigger>
+                </LessonFormDialog>
+              </CardHeader>
+              <CardContent>
+                <SortableLessonList
+                  sections={course.courseSections}
+                  lessons={section.lesson}
+                />
+              </CardContent>
+            </Card>
+          ))}
         </TabsContent>
         <TabsContent value="details">
           <Card>

@@ -1,5 +1,6 @@
 import type { Config } from "tailwindcss";
 import containerQueries from "@tailwindcss/container-queries";
+import scrollbar from "tailwind-scrollbar";
 
 export default {
   darkMode: ["class"],
@@ -91,5 +92,5 @@ export default {
   },
 
   // require("tailwindcss-animate"),
-  plugins: [containerQueries],
+  plugins: [containerQueries, scrollbar],
 } satisfies Config;
