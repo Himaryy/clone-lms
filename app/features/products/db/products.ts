@@ -17,12 +17,15 @@ export async function insertProduct(
       throw new Error("Failed to create product");
     }
 
-    await trx.insert(CourseProductTable).values(
-      data.courseIds.map((courseId) => ({
-        productId: newProduct.id,
-        courseId,
-      }))
-    );
+    await trx
+      .insert(CourseProductTable)
+      .values(
+        data.courseIds.map((courseId) => ({
+          productId: newProduct.id,
+          courseId,
+        }))
+      )
+      .returning();
 
     return newProduct;
   });

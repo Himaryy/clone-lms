@@ -63,7 +63,7 @@ export function ProductTable({
                 <div className="flex flex-col gap-1">
                   <div className="font-semibold">{product.name}</div>
                   <div className="text-muted-foreground">
-                    {formatPlural(product.coursesCount, {
+                    {formatPlural(product.coursesCount ?? 0, {
                       singular: "course",
                       plural: "courses",
                     })}{" "}

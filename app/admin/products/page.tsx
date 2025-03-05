@@ -47,7 +47,7 @@ async function getProducts() {
     .leftJoin(PurchaseTable, eq(PurchaseTable.productId, DbProductTable.id))
     .leftJoin(
       CourseProductTable,
-      eq(PurchaseTable.productId, DbProductTable.id)
+      eq(CourseProductTable.productId, DbProductTable.id)
     )
     .orderBy(asc(DbProductTable.name))
     .groupBy(DbProductTable.id);
