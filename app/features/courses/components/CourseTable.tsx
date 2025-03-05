@@ -13,6 +13,8 @@ import { Trash2Icon } from "lucide-react";
 import Link from "next/link";
 import { deleteCourse } from "../actions/courses";
 
+// 3:49:38
+
 export function CourseTable({
   courses,
 }: {
@@ -46,15 +48,13 @@ export function CourseTable({
               <div className="flex flex-col gap-1">
                 <div className="font-semibold">{course.name}</div>
                 <div className="text-muted-foreground">
-                  {formatPlural(course.sectionsCount, {
-                    singular: "section",
-                    plural: "sections",
-                  })}{" "}
-                  •{" "}
-                  {formatPlural(course.lessonCount, {
-                    singular: "lesson",
-                    plural: "lessons",
-                  })}
+                  {`${formatPlural(course.sectionsCount, {
+                    singular: "Section",
+                    plural: "Sections",
+                  })} • ${formatPlural(course.lessonCount, {
+                    singular: "Lesson",
+                    plural: "Lessons",
+                  })}`}
                 </div>
               </div>
             </TableCell>
