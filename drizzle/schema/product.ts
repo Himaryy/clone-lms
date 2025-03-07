@@ -19,6 +19,6 @@ export const ProductTable = pgTable("products", {
 });
 
 export const ProductRelationships = relations(ProductTable, ({ many }) => ({
-  course: many(CourseProductTable),
-  // courseProducts: many(CourseProductTable),
+  // course: many(CourseProductTable),
+  courseProducts: many(CourseProductTable),
 }));
