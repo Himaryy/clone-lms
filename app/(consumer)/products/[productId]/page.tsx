@@ -4,17 +4,38 @@ import { wherePublicCourseSections } from "@/app/features/courseSection/permissi
 import { getLessonCourseTag } from "@/app/features/lesson/db/cache/lesson";
 import { wherePublicLessons } from "@/app/features/lesson/permissions/lessons";
 import { getProductIdTag } from "@/app/features/products/db/cache";
+import { userOwnsProduct } from "@/app/features/products/db/products";
 import { wherePublicProducts } from "@/app/features/products/permissions/products";
+import { SkeletonButton } from "@/components/SkeletonButton";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { db } from "@/drizzle/db";
 import {
   CourseSectionTable,
   LessonTable,
   ProductTable,
 } from "@/drizzle/schema";
-import { formatPrice } from "@/lib/formatters";
+import { formatPlural, formatPrice } from "@/lib/formatters";
 import { sumArray } from "@/lib/sumArray";
+import { getUserCoupon } from "@/lib/userCountryHeader";
+import { getCurrentUser } from "@/services/clerk";
 import { and, asc, eq } from "drizzle-orm";
+import { VideoIcon } from "lucide-react";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
+import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
@@ -30,13 +51,13 @@ export default async function ProductPage({
 
   const courseCount = product.courses.length;
   const lessonCount = sumArray(product.courses, (course) =>
-    sumArray(course.courseSections, (s) => s.lessons.length)
+    sumArray(course.courseSections, (s) => s.lesson.length)
   );
 
   return (
     <div className="container my-6">
       <div className="flex gap-16 items-center justify-between">
-        <div className="flex gap-67 flex-col items-start">
+        <div className="flex gap-6 flex-col items-start">
           <div className="flex flex-col gap-2">
             <Suspense
               fallback={
@@ -47,8 +68,126 @@ export default async function ProductPage({
             >
               <Price price={product.priceInDollars} />
             </Suspense>
+            <h1 className="text-4xl font-semibold">{product.name}</h1>
+            <div className="text-muted-foreground">
+              {formatPlural(courseCount ?? 0, {
+                singular: "course",
+                plural: "courses",
+              })}{" "}
+              • {formatPrice(product.priceInDollars)}
+            </div>
           </div>
+          <div className="text-xl">{product.description}</div>
+          <Suspense fallback={<SkeletonButton className="h-12 w-36" />}>
+            <PurchaseButton productId={product.id} />
+          </Suspense>
         </div>
+        <div className="relative aspect-video max-w-lg flex-grow">
+          <Image
+            src={product.imageUrl}
+            alt={product.name}
+            fill
+            className="object-contain rounded-xl"
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8 items-start">
+        {product.courses.map((course) => (
+          <Card key={course.id}>
+            <CardHeader>
+              <CardTitle>{course.name}</CardTitle>
+              <CardDescription>
+                {formatPlural(course.courseSections.length, {
+                  plural: "sections",
+                  singular: "section",
+                })}{" "}
+                •{" "}
+                {formatPlural(
+                  sumArray(course.courseSections, (s) => s.lesson.length),
+                  {
+                    plural: "lessons",
+                    singular: "lesson",
+                  }
+                )}
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent>
+              <Accordion type="multiple">
+                {course.courseSections.map((section) => (
+                  <AccordionItem key={section.id} value={section.id}>
+                    <AccordionTrigger className="flex gap-2">
+                      <div className="flex flex-col flex-grow">
+                        <span className="text-lg">{section.name}</span>
+                        <span className="text-muted-foreground">
+                          {formatPlural(section.lesson.length, {
+                            singular: "lesson",
+                            plural: "lessons",
+                          })}
+                        </span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="flex flex-col gap-2">
+                      {section.lesson.map((lesson) => (
+                        <div
+                          className="flex items-center gap-2 text-base"
+                          key={lesson.id}
+                        >
+                          <VideoIcon className="size-4" />
+                          {lesson.status === "preview" ? (
+                            <Link
+                              href={`/courses/${course.id}/lessons/${lesson.id}`}
+                              className="underline text-accent"
+                            >
+                              {lesson.name}
+                            </Link>
+                          ) : (
+                            lesson.name
+                          )}
+                        </div>
+                      ))}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+async function PurchaseButton({ productId }: { productId: string }) {
+  const { userId } = await getCurrentUser();
+  const alreadyOwnsProduct =
+    userId != null && (await userOwnsProduct({ userId, productId }));
+
+  if (alreadyOwnsProduct) {
+    return <p>You already own this product</p>;
+  } else {
+    return (
+      <Button asChild className="text-xl h-auto py-4 px-8 rounded-lg">
+        <Link href={`/products/${productId}/purchase`}>Get Now</Link>
+      </Button>
+    );
+  }
+}
+
+async function Price({ price }: { price: number }) {
+  const coupon = await getUserCoupon();
+
+  if (price == 0 || coupon == null) {
+    return <div className="text-xl">{formatPrice(price)}</div>;
+  }
+
+  return (
+    <div className="flex gap-2 items-baseline">
+      <div className="line-through text-sm opacity-50">
+        {formatPrice(price)}
+      </div>
+      <div className="text-xl">
+        {formatPrice(price * (1 - coupon.discountPercantage))}
       </div>
     </div>
   );
@@ -110,6 +249,6 @@ async function getPublicProduct(id: string) {
 
   return {
     ...other,
-    courses: product.courseProducts.map((cp) => cp.course), // ✅ Fix property name
+    courses: courseProducts.map((cp) => cp.course),
   };
 }

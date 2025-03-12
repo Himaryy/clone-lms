@@ -24,9 +24,9 @@ export default async function EditProductPage({
       <ProductForm
         product={{
           ...product,
-          courseIds: product.course.map((c) => c.courseId),
+          courseIds: product.courseProducts.map((c) => c.courseId), // Ensure courseIds are passed here
         }}
-        courses={await getCourses()}
+        courses={await getCourses()} // Pass all available courses
       />
     </div>
   );
@@ -46,7 +46,7 @@ async function getProduct(id: string) {
   "use cache";
   cacheTag(getProductIdTag(id));
 
-  return db.query.ProductTable.findFirst({
+  const product = await db.query.ProductTable.findFirst({
     columns: {
       id: true,
       name: true,
@@ -57,11 +57,13 @@ async function getProduct(id: string) {
     },
     where: eq(ProductTable.id, id),
     with: {
-      course: {
+      courseProducts: {
         columns: {
-          courseId: true,
+          courseId: true, // Ensure that courseId is included in the selection
         },
       },
     },
   });
+
+  return product;
 }

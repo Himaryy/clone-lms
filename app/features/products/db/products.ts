@@ -1,7 +1,34 @@
 import { db } from "@/drizzle/db";
-import { CourseProductTable, ProductTable } from "@/drizzle/schema";
-import { eq } from "drizzle-orm";
+import {
+  CourseProductTable,
+  ProductTable,
+  PurchaseTable,
+} from "@/drizzle/schema";
+import { and, eq, isNull } from "drizzle-orm";
 import { revalidateProductCache } from "./cache";
+import { cacheTag } from "next/dist/server/use-cache/cache-tag";
+import { getPurchaseUserTag } from "../../purchases/db/cache";
+
+export async function userOwnsProduct({
+  userId,
+  productId,
+}: {
+  userId: string;
+  productId: string;
+}) {
+  "use cache";
+  cacheTag(getPurchaseUserTag(userId));
+
+  const existingPurchase = await db.query.PurchaseTable.findFirst({
+    where: and(
+      eq(PurchaseTable.productId, productId),
+      eq(PurchaseTable.userId, userId),
+      isNull(PurchaseTable.refundedAt)
+    ),
+  });
+
+  return existingPurchase != null;
+}
 
 export async function insertProduct(
   data: typeof ProductTable.$inferInsert & { courseIds: string[] }
@@ -17,6 +44,17 @@ export async function insertProduct(
       throw new Error("Failed to create product");
     }
 
+    // await trx
+    //   .insert(CourseProductTable)
+    //   .values(
+    //     data.courseIds.map((courseId) => ({
+    //       productId: newProduct.id,
+    //       courseId,
+    //     }))
+    //   )
+    //   .returning();
+    // console.log("Valid courseIds:", data.courseIds); // Log the course IDs to verify
+
     await trx
       .insert(CourseProductTable)
       .values(
@@ -25,13 +63,15 @@ export async function insertProduct(
           courseId,
         }))
       )
-      .returning();
-
+      .returning()
+      .catch((err) => {
+        console.error("Error inserting courses:", err); // Log any insertion errors
+      });
     return newProduct;
   });
 
   revalidateProductCache(newProduct.id);
-
+  // console.log("Product insertion completed: ", newProduct);
   return newProduct;
 }
 

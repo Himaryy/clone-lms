@@ -49,19 +49,25 @@ export function ProductForm({
 }) {
   const form = useForm<z.infer<typeof productSchema>>({
     resolver: zodResolver(productSchema),
-    defaultValues: product ?? {
-      name: "",
-      description: "",
-      courseIds: [],
-      imageUrl: "",
-      priceInDollars: 0,
-      status: "private",
-    },
+    defaultValues: product
+      ? {
+          ...product,
+          courseIds: product.courseIds || [], // Ensure courseIds are passed from the product
+        }
+      : {
+          name: "",
+          description: "",
+          courseIds: [], // Default empty array for new products
+          imageUrl: "",
+          priceInDollars: 0,
+          status: "private",
+        },
   });
 
   const [isLoading, startTransition] = useTransition();
 
   async function onSubmit(values: z.infer<typeof productSchema>) {
+    console.log("cek", values);
     startTransition(async () => {
       try {
         const data = product
@@ -176,25 +182,25 @@ export function ProductForm({
           <FormField
             control={form.control}
             name="courseIds"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Include Courses</FormLabel>
-
-                <FormControl>
-                  <MultiSelect
-                    selectPlaceholder="Select Course"
-                    searchPlaceholder="Search Course"
-                    options={courses}
-                    getLabel={(c) => c.name}
-                    getValue={(c) => c.id}
-                    selectedValues={field.value}
-                    onSelectedValuesChange={field.onChange}
-                  />
-                </FormControl>
-                {/* <Textarea className="min-h-20 resize-none" {...field} /> */}
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              console.log("Field Value for courseIds:", field.value); // Debugging log
+              return (
+                <FormItem>
+                  <FormLabel>Include Courses</FormLabel>
+                  <FormControl>
+                    <MultiSelect
+                      selectPlaceholder="Select Course"
+                      searchPlaceholder="Search Course"
+                      options={courses}
+                      getLabel={(course) => course.name}
+                      getValue={(course) => course.id}
+                      selectedValues={field.value} // This should show the selected course IDs
+                      onSelectedValuesChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              );
+            }}
           />
         </div>
 
