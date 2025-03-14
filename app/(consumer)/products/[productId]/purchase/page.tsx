@@ -36,8 +36,8 @@ async function SuspendedComponent({
 }) {
   const { productId } = await params;
   const { authMode } = await searchParams;
-  const product = getPublicProduct(productId);
-  const { user } = getCurrentUser({ allData: true });
+  const product = await getPublicProduct(productId);
+  const { user } = await getCurrentUser({ allData: true });
   const isSignUp = authMode === "signUp";
 
   if (product == null) return notFound();

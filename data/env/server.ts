@@ -17,6 +17,7 @@ export const env = createEnv({
     STRIPE_PPP_40_COUPON_ID: z.string().min(1),
     STRIPE_PPP_50_COUPON_ID: z.string().min(1),
     STRIPE_SECRET_KEY: z.string().min(1),
+    STRIPE_WEBHOOKS_SECRET: z.string().min(1),
   },
   experimental__runtimeEnv: process.env,
 });
